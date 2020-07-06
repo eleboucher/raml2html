@@ -1,0 +1,120 @@
+{% if (resource.methods or (resource.description and resource.parentUrl)) %}
+
+  {% for method in resource.methods %}
+  
+# {{ (method.method | upper )}} {{ resource.parentUrl }}{{ resource.relativeUri }}
+
+{{ method.description }}
+
+## Request
+
+    {% if resource.allUriParameters.length %}
+#### URI Parameters
+
+| Name | Type | Required | Description |
+| ---- | ---- | -------- | ----------- |
+      {%- for param in resource.allUriParameters %}
+{% include "./param-table.nunjucks" %}
+      {%- endfor %}
+    {% endif %}
+
+    {% if method.headers %}
+#### Header Parameters
+
+| Name | Type | Required | Description |
+| ---- | ---- | -------- | ----------- |
+      {%- for key, param in method.headers %}
+{% include "./param-table.nunjucks" %}
+      {%- endfor %}
+    {% endif %}
+
+    {% if method.queryParameters %}
+#### Query Parameters
+
+| Name | Type | Required | Description |
+| ---- | ---- | -------- | ----------- |
+      {%- for key, param in method.queryParameters %}
+{% include "./param-table.nunjucks" %}
+      {%- endfor %}
+    {% endif %}
+
+    {% if method.body %}
+      {% for key, b in method.body %}
+        {% if b.schema %}
+<details><summary><strong>Schema</strong>:</summary>
+<p>
+
+```json
+{{ b.schema  }}
+```
+
+</p>
+</details>
+        {% endif %}
+
+        {% if b.example %}
+<details><summary><strong>Example</strong>:</summary>
+<p>
+
+```json
+{{ b.example  }}
+```
+
+</p>
+</details>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+  {% if method.responses != {} %}
+## Response
+    {% for key, response in method.responses %}
+### HTTP status code [{{ key }}]({{ key }})
+
+{{ response.description }}
+      {% if response.headers %}
+#### Headers
+
+| Name | Type | Required | Description |
+| ---- | ---- | -------- | ----------- |
+        {%- for key, param in response.headers -%}
+{% include "./param-table.nunjucks" %}
+        {%- endfor %}
+      {% endif %}
+
+        {% if response.body %}
+          {% for key, b in response.body %}
+            {% if b.schema %}
+<details><summary><strong>Schema</strong>:</summary>
+<p>
+
+```json
+{{ b.schema  }}
+```
+
+</p>
+</details>
+          {% endif %}
+
+          {% if b.example %}
+<details><summary><strong>Example</strong>:</summary>
+<p>
+
+```json
+{{ b.example  }}
+```
+
+</p>
+</details>
+          {% endif %}
+
+      {% endfor %}
+    {% endif %}
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+{% endif %}
+
+{% for resource in resource.resources %}
+{% include "./resource.nunjucks" %}
+{% endfor %}

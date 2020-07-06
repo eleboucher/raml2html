@@ -13,8 +13,7 @@
     "commander": "2.9.x",
     "marked": "0.3.x",
     "minimize": "2.0.x",
-    "nunjucks": "2.4.x",
-    "nunjucks-markdown": "2.0.x",
+    "nunjucks": "^3.2.0",
     "raml2obj": "3.0.0",
     "raml-jsonschema-expander": "1.1.x"
   },

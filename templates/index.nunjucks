@@ -1,0 +1,39 @@
+{% set comma = joiner() %}
+# {{ title }} Documentation
+
+{% if version %}**version**: {{ version }}{% endif %}
+
+{% if baseUri %}**baseUri**: {{ baseUri }}{% endif %}
+
+
+
+{% if protocols %}**protocols**:
+    {%- for protocol in protocols -%}
+{{ comma() }} {{protocol}}
+    {%- endfor %}
+{% endif -%}
+
+{% if mediaType %}
+**mediaType** {{ mediaType }}
+{% endif %}
+
+{% for item in documentation %}
+# {{ item.title }}
+
+{{ item.content }}
+
+{% endfor %}
+
+# Table of endpoints
+
+{% for resource in resources %}
+
+{% include "./table-of-content.nunjucks" %}
+
+{% endfor %}
+
+{% for resource in resources %}
+
+{% include "./resource.nunjucks" %}
+
+{% endfor %}

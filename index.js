@@ -1,7 +1,44 @@
-'use strict';
+"use strict";
+const path = require("path");
+const raml2obj = require("raml2obj");
+const pjson = require("./package.json");
 
-const raml2obj = require('raml2obj');
-const pjson = require('./package.json');
+const getCurlStatement = require(path.join(__dirname, "lib/stylus-globals.js"))
+  .getCurlStatement;
+const getLanguage = require(path.join(__dirname, "lib/stylus-globals.js"))
+  .getLanguage;
+const getResponseHeaders = require(path.join(
+  __dirname,
+  "lib/stylus-globals.js"
+)).getResponseHeaders;
+const getSafeId = require(path.join(__dirname, "lib/stylus-globals.js"))
+  .getSafeId;
+const hasExamples = require(path.join(__dirname, "lib/stylus-globals.js"))
+  .hasExamples;
+const getTypeDefinitions = require(path.join(
+  __dirname,
+  "lib/stylus-globals.js"
+)).getTypeDefinitions;
+const hasType = require(path.join(__dirname, "lib/stylus-globals.js")).hasType;
+const getType = require(path.join(__dirname, "lib/stylus-globals.js")).getType;
+
+const defaultTemplatesDir = path.join(__dirname, "templates");
+
+/**
+ * Cleans up Markdown string from trailing spaces and excessive line breaks.
+ * @param  {string}  input A Markdown string
+ * @return {string}        A cleaned up Markdown string
+ */
+function cleanupMarkdown(input) {
+  const trailingSpaces = / +\n/g;
+  const excessiveNewLines = /\n{3,}/g;
+  if (!input) {
+    return input;
+  }
+  let result = input.replace(trailingSpaces, "\n");
+  result = result.replace(excessiveNewLines, "\n\n");
+  return result;
+}
 
 /**
  * Render the source RAML object using the config's processOutput function
@@ -24,9 +61,7 @@ function render(source, config) {
 
     if (config.processRamlObj) {
       return config.processRamlObj(ramlObj).then((html) => {
-        if (config.postProcessHtml) {
-          return config.postProcessHtml(html);
-        }
+
         return html;
       });
     }
@@ -40,70 +75,39 @@ function render(source, config) {
  * @param {String} [templatesPath] - Optional, by default it uses the current working directory
  * @returns {{processRamlObj: Function, postProcessHtml: Function}}
  */
-function getDefaultConfig(mainTemplate, templatesPath) {
-  if (!mainTemplate) {
-    mainTemplate = './lib/template.nunjucks';
-
-    // When using the default template, make sure that Nunjucks isn't
-    // using the working directory since that might be anything
-    templatesPath = __dirname;
-  }
-
+function getDefaultConfig() {
   return {
     processRamlObj(ramlObj) {
-      const nunjucks = require('nunjucks');
-      const markdown = require('nunjucks-markdown');
-      const marked = require('marked');
-      const ramljsonexpander = require('raml-jsonschema-expander');
-      const renderer = new marked.Renderer();
-      renderer.table = function (thead, tbody) {
-        // Render Bootstrap style tables
-        return `<table class="table"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`;
-      };
+      const nunjucks = require("nunjucks");
+      const ramljsonexpander = require("raml-jsonschema-expander");
 
-      // Setup the Nunjucks environment with the markdown parser
-      const env = nunjucks.configure(templatesPath, { autoescape: false });
-      markdown.register(env, (md) => marked(md, { renderer }));
+      const template = path.join(defaultTemplatesDir, "root.nunjucks");
 
-      // Parse securedBy and use scopes if they are defined
-      ramlObj.renderSecuredBy = function (securedBy) {
-        let out = '';
-        if (typeof securedBy === 'object') {
-          Object.keys(securedBy).forEach((key) => {
-            out += `<b>${key}</b>`;
-
-            if (securedBy[key].scopes.length) {
-              out += ' with scopes:<ul>';
-
-              securedBy[key].scopes.forEach((scope) => {
-                out += `<li>${scope}</li>`;
-              });
-
-              out += '</ul>';
-            }
-          });
-        } else {
-          out = `<b>${securedBy}</b>`;
-        }
-        return out;
-      };
+      const env = nunjucks
+        .configure(defaultTemplatesDir, { autoescape: false })
+        .addGlobal("getSafeId", getSafeId)
+        .addGlobal("getLanguage", getLanguage)
+        .addGlobal("getResponseHeaders", getResponseHeaders)
+        .addGlobal("hasExamples", hasExamples)
+        .addGlobal("getTypeDefinitions", getTypeDefinitions)
+        .addGlobal("hasType", hasType)
+        .addGlobal("getType", getType);
 
       // Find and replace the $ref parameters.
       ramlObj = ramljsonexpander.expandJsonSchemas(ramlObj);
 
-      // Render the main template using the raml object and fix the double quotes
-      let html = env.render(mainTemplate, ramlObj);
-      html = html.replace(/&quot;/g, '"');
 
       // Return the promise with the html
       return new Promise((resolve) => {
-        resolve(html);
+        let result = env.render(template, ramlObj);
+        result = cleanupMarkdown(result);
+        return resolve(result);
       });
     },
 
     postProcessHtml(html) {
       // Minimize the generated html and return the promise with the result
-      const Minimize = require('minimize');
+      const Minimize = require("minimize");
       const minimize = new Minimize({ quotes: true });
 
       return new Promise((resolve, reject) => {
@@ -125,6 +129,8 @@ module.exports = {
 };
 
 if (require.main === module) {
-  console.log('This script is meant to be used as a library. You probably want to run bin/raml2html if you\'re looking for a CLI.');
+  console.log(
+    "This script is meant to be used as a library. You probably want to run bin/raml2html if you're looking for a CLI."
+  );
   process.exit(1);
 }

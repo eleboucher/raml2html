@@ -1,0 +1,11 @@
+{% if (resource.methods or (resource.description and resource.parentUrl)) %}
+  {% for method in resource.methods %}
+
+* [{{ (method.method | upper )}} {{ resource.parentUrl }}{{ resource.relativeUri }}](#{{ (method.method | upper )}}-{{ resource.parentUrl }}{{ resource.relativeUri }})
+
+    {% endfor %}
+{% endif %}
+
+{% for resource in resource.resources %}
+{% include "./table-of-content.nunjucks" %}
+{% endfor %}
