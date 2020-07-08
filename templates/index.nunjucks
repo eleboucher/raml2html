@@ -27,7 +27,7 @@
 # Table of endpoints
 
 {% for resource in resources %}
-
+{% set depth = 0 %}
 {% include "./table-of-content.nunjucks" %}
 
 {% endfor %}
