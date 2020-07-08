@@ -71,6 +71,20 @@ function render(source, config) {
 }
 
 /**
+ * Render the source RAML object using the config's processOutput function
+ *
+ * The config object should contain at least the following property:
+ * processRamlObj: function that takes the raw RAML object and returns a promise with the rendered HTML
+ *
+ * @param {(String|Object)} source - The source RAML file. Can be a filename, url, contents of the RAML file,
+ * or an already-parsed RAML object.
+ * @returns a promise
+ */
+function validate(source) {
+  return raml2obj.parse(source);
+}
+
+/**
  * @param {String} [mainTemplate] - The filename of the main template, leave empty to use default templates
  * @param {String} [templatesPath] - Optional, by default it uses the current working directory
  * @returns {{processRamlObj: Function, postProcessHtml: Function}}
@@ -95,7 +109,6 @@ function getDefaultConfig() {
 
       // Find and replace the $ref parameters.
       ramlObj = ramljsonexpander.expandJsonSchemas(ramlObj);
-
 
       // Return the promise with the html
       return new Promise((resolve) => {
@@ -126,6 +139,7 @@ function getDefaultConfig() {
 module.exports = {
   getDefaultConfig,
   render,
+  validate,
 };
 
 if (require.main === module) {

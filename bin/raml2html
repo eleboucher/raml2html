@@ -10,6 +10,7 @@ const pjson = require('../package.json');
 program
   .version(pjson.version)
   .usage('[options] [RAML input file]')
+  .option('-v, --validate', 'validate the raml file')
   .option('-i, --input [input]', 'RAML input file')
   .option('-t, --template [template]', 'Filename of the custom Nunjucks template')
   .option('-o, --output [output]', 'HTML output file')
@@ -27,6 +28,22 @@ if (!input) {
   input = program.args[0];
 }
 
+if (program.validate) {
+  return raml2html.render(input).then(() => {
+    if (program.output) {
+      fs.writeFileSync(program.output, 'OK');
+    } else {
+      // Simply output to console
+      process.stdout.write('OK', () => {
+        process.exit(0);
+      });
+    }
+  }
+  ).catch((error) => {
+    console.error(new Error(error));
+    process.exit(1);
+  });
+}
 // Start the rendering process
 raml2html.render(input, raml2html.getDefaultConfig(program.template)).then((result) => {
   if (program.output) {
